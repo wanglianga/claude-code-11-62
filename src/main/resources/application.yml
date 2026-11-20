@@ -1,0 +1,56 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: bonded-ledger
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://127.0.0.1:5432/ccdev?currentSchema=bonded_ledger}
+    username: ${DB_USER:ccdev}
+    password: ${DB_PASSWORD:ccdev}
+    hikari:
+      maximum-pool-size: ${DB_POOL_SIZE:12}
+      connection-init-sql: CREATE SCHEMA IF NOT EXISTS bonded_ledger
+  sql:
+    init:
+      mode: always
+      encoding: UTF-8
+      continue-on-error: false
+      schema-locations: classpath:db/migration/schema.sql
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+      order-map-entries-by-keys: false
+    default-property-inclusion: non_null
+
+ledger:
+  zone: Asia/Shanghai
+  algorithm-version: ledger-1.0.0
+  # MATERIALIZED: the close stores the per-batch allocation relation for fast audit queries.
+  # REBUILD: the close stores only the input boundary + algorithm version; relations are
+  # rebuilt deterministically when queried. A threshold can automate the choice.
+  materialization:
+    default-mode: MATERIALIZED
+    auto-threshold-documents: 500
+  logging:
+    level:
+      com.customs.ledger: INFO
+
+  # Set SEED_DEMO=true (or ledger.seed-demo=true) to create a worked demo ledger on first start.
+  seed-demo: ${SEED_DEMO:false}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+  api-docs:
+    path: /v3/api-docs
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
